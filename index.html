@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strike Zone</title>
+  <!-- LINK 1: stylesheet (folder must be named strikezone) -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+
+  <!-- 3D game is drawn on this canvas by game.js -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" class="hidden">
+    <div id="crosshair"><i class="ch t"></i><i class="ch b"></i><i class="ch l"></i><i class="ch r"></i><i class="dot"></i></div>
+    <div id="hitmarker"></div>
+    <div id="headshot-text">HEAD SHOT</div>
+    <div id="hs-flash"></div>
+    <div id="hs-kill">ELIMINATED</div>
+    <div id="damage-vignette"></div>
+    <div id="damage-dir"><span></span></div>
+    <div id="scope-overlay"><div class="sv"></div><div class="sh"></div></div>
+
+    <div id="top-left">
+      <canvas id="minimap" width="150" height="150"></canvas>
+      <div id="hud-user"></div>
+      <div id="hud-map"></div>
+      <div id="hud-pov"></div>
+    </div>
+
+    <div id="top-right">
+      <div class="stat"><span>KILLS</span><b id="s-kills">0</b></div>
+      <div class="stat"><span>BEST RUN</span><b id="s-best">0</b></div>
+      <div class="stat"><span>ALL-TIME KILLS</span><b id="s-total">0</b></div>
+      <div class="stat"><span>HEADSHOTS</span><b id="s-hs">0</b></div>
+      <div class="stat coin"><span>COINS</span><b id="s-coins">0</b></div>
+    </div>
+
+    <div id="killfeed"></div>
+    <div id="hint"></div>
+    <div id="reload-bar"><i></i></div>
+
+    <div id="bottom-left">
+      <div id="hp-label">HEALTH <b id="hp-text">100</b></div>
+      <div id="hp-bar"><div id="hp-fill"></div></div>
+    </div>
+
+    <div id="slots">
+      <div class="slot" data-slot="0"><em>1</em><span></span></div>
+      <div class="slot" data-slot="1"><em>2</em><span></span></div>
+      <div class="slot" data-slot="2"><em>3</em><span></span></div>
+      <div class="slot" data-slot="3"><em>4</em><span></span></div>
+    </div>
+
+    <div id="ammo">
+      <div id="ammo-name">AK-47</div>
+      <div id="ammo-count"><b id="ammo-mag">30</b><small id="ammo-res"> / 90</small></div>
+    </div>
+  </div>
+
+  <!-- ===================== MAIN MENU ===================== -->
+  <div id="menu" class="screen">
+    <div class="panel menu-panel">
+      <h1>STRIKE <span>ZONE</span></h1>
+      <p class="tag">Tactical Shooter &bull; 4 Maps &bull; Vending-Machine Armory</p>
+
+      <div class="row">
+        <label for="username">USERNAME</label>
+        <input id="username" type="text" maxlength="16" placeholder="Enter your name" autocomplete="off">
+      </div>
+
+      <div class="row">
+        <label>SELECT OPERATOR</label>
+        <div id="char-list"></div>
+      </div>
+
+      <div class="row">
+        <label>SELECT MAP</label>
+        <div id="map-list"></div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label for="quality">GRAPHICS</label>
+          <select id="quality">
+            <option value="high">High (shadows, sharp)</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low (fast PCs)</option>
+          </select>
+        </div>
+        <div>
+          <label for="sens">MOUSE SENSITIVITY</label>
+          <input id="sens" type="range" min="0.3" max="2.5" step="0.1" value="1">
+        </div>
+      </div>
+
+      <button id="btn-play" class="btn big">PLAY</button>
+
+      <div class="menu-cols">
+        <div class="box">
+          <h3>LEADERBOARD <small>(this browser)</small></h3>
+          <table id="board"><thead><tr><th>#</th><th>Player</th><th>Best run</th><th>All kills</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="box">
+          <h3>CONTROLS</h3>
+          <ul class="keys">
+            <li><b>W A S D</b> move &nbsp; <b>Shift</b> sprint &nbsp; <b>Space</b> jump</li>
+            <li><b>Mouse</b> aim &nbsp; <b>Left click</b> fire &nbsp; <b>Right click</b> aim/zoom</li>
+            <li><b>1 / 2</b> guns &nbsp; <b>3</b> pistol/knife &nbsp; <b>4</b> melee &nbsp; <b>Wheel</b> cycle</li>
+            <li><b>R</b> reload &nbsp; <b>V</b> change POV &nbsp; <b>C</b> crouch</li>
+            <li><b>B</b> open store (or <b>E</b> at a vending machine)</li>
+            <li><b>Esc</b> pause / settings &nbsp; Green pads heal you</li>
+            <li><b>Training area</b> (blue circle on minimap): no enemies, free practice dummies</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== STORE / VENDING MACHINE ===================== -->
+  <div id="store" class="screen hidden">
+    <div class="panel store-panel">
+      <div class="store-head">
+        <h2>WEAPON VENDING MACHINE</h2>
+        <div class="coins">COINS: <b id="store-coins">0</b></div>
+        <button id="store-close" class="btn small">CLOSE (B)</button>
+      </div>
+      <div id="store-tabs">
+        <button data-tab="guns" class="tab active">Guns</button>
+        <button data-tab="side" class="tab">Pistols &amp; Knives</button>
+        <button data-tab="melee" class="tab">Melee</button>
+        <button data-tab="supplies" class="tab">Supplies</button>
+      </div>
+      <div id="store-note">Slots: 1 &amp; 2 = guns &bull; 3 = pistol or knife &bull; 4 = melee. Earn coins by eliminating enemies.</div>
+      <div id="store-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===================== PAUSE / SETTINGS ===================== -->
+  <div id="pause" class="screen hidden">
+    <div class="panel settings-panel">
+      <h2>PAUSED &mdash; SETTINGS</h2>
+      <p class="tag" style="margin-top:0">Change these any time during a match. Resume to lock the mouse again.</p>
+
+      <div class="row two">
+        <div>
+          <label for="set-sound">MASTER SOUND</label>
+          <label class="toggle"><input id="set-sound" type="checkbox" checked> Guns, hits, announcer, ambience</label>
+        </div>
+        <div>
+          <label for="set-vfx">VFX</label>
+          <label class="toggle"><input id="set-vfx" type="checkbox" checked> Blood, tracers, sparks, screen flashes</label>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label for="set-sens">MOUSE SENSITIVITY <b id="set-sens-val">1.0</b></label>
+          <input id="set-sens" type="range" min="0.3" max="2.5" step="0.1" value="1">
+        </div>
+        <div>
+          <label for="set-hud-scale">HUD SIZE <b id="set-hud-scale-val">100%</b></label>
+          <input id="set-hud-scale" type="range" min="0.75" max="1.25" step="0.05" value="1">
+        </div>
+      </div>
+
+      <div class="row">
+        <label>HUD CONTROLS</label>
+        <div class="hud-toggles">
+          <label class="toggle"><input id="hud-minimap" type="checkbox" checked> Minimap</label>
+          <label class="toggle"><input id="hud-stats" type="checkbox" checked> Score panel</label>
+          <label class="toggle"><input id="hud-feed" type="checkbox" checked> Killfeed</label>
+          <label class="toggle"><input id="hud-slots" type="checkbox" checked> Weapon slots</label>
+          <label class="toggle"><input id="hud-ammo" type="checkbox" checked> Ammo</label>
+          <label class="toggle"><input id="hud-cross" type="checkbox" checked> Crosshair</label>
+        </div>
+      </div>
+
+      <button id="btn-resume" class="btn big">RESUME</button>
+      <button id="btn-quit" class="btn">QUIT TO MENU</button>
+    </div>
+  </div>
+
+  <!-- ===================== GAME OVER ===================== -->
+  <div id="gameover" class="screen hidden">
+    <div class="panel small-panel">
+      <h2 class="red">YOU WERE ELIMINATED</h2>
+      <div id="go-stats"></div>
+      <button id="btn-again" class="btn big">PLAY AGAIN</button>
+      <button id="btn-menu" class="btn">MAIN MENU</button>
+    </div>
+  </div>
+
+  <!-- ===================== SCRIPTS =====================
+       ORDER MATTERS. Each file uses things from the files above it.
+       three.js comes from the internet (CDN). Your files live in the strikezone folder. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="audio.js"></script>
+  <script src="weapons.js"></script>
+  <script src="characters.js"></script>
+  <script src="maps.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
