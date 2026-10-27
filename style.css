@@ -58,7 +58,13 @@ html, body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
-.menu-panel { width: min(900px, 100%); }
+.menu-panel { width: min(800px, 100%);
+             height: 1000px;
+             min-height: 0;
+             max-height: none;
+             margin: 20px auto;
+             box-sizing: border-box;
+             margin-top: auto;}
 .small-panel { width: min(420px, 100%); text-align: center; }
 .small-panel .btn { display: block; width: 100%; margin-top: 12px; }
 .settings-panel { width: min(640px, 100%); }
